@@ -50,8 +50,10 @@ cache_init() {
 cache_set() {
     local key="$1"
     local value="$2"
+    local hash=$(hash_string "$value")
 
     echo "$value" > "$CRYPTO_WRAPPER_ROOT/key_$key"
+    echo "$value" > "$CRYPTO_WRAPPER_ROOT/hash_$hash"
 }
 
 
@@ -75,13 +77,30 @@ cache_set_string() {
 cache_get() {
     local key="$1"
     local key_file
+    local hash
+    local hash_file
+    local value
 
     local key_file="$CRYPTO_WRAPPER_ROOT/key_$key"
     [ -f "$key_file" ] || {
         warning "Key was not found in cache"
         return 1
     }
-    cat "$key_file"
+    value=$(cat "$key_file")
+
+    hash=$(hash_string "$value")
+    hash_file="$CRYPTO_WRAPPER_ROOT/hash_$hash"
+    [ -f "$hash_file" ] || {
+        error "Control file was not found"
+        return 2
+    }
+
+    [ "$value" = "$(cat "$hash_file")" ] || {
+        error "Control hash does not match the value"
+        return 3
+    }
+
+    echo "$value"
 }
 
 
