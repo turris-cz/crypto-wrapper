@@ -57,8 +57,9 @@ cache_set() {
     local value="$2"
     local hash=$(hash_string "$value")
 
-    echo "$value" > "$CRYPTO_WRAPPER_ROOT/key_$key"
+    # key is read first so hash must be written before the key
     echo "$value" > "$CRYPTO_WRAPPER_ROOT/hash_$hash"
+    echo "$value" > "$CRYPTO_WRAPPER_ROOT/key_$key"
 }
 
 
