@@ -12,8 +12,6 @@ HASH_TYPE='sha256'
 
 CRYPTO_WRAPPER_ROOT_PREFIX='/tmp/crypto_wrapper'
 
-CRYPTO_KEY_SERIAL='serial'
-
 
 # --------------------------------------------------------------------
 stderr_mesage() {
@@ -155,17 +153,35 @@ cache_get_string() {
 
 
 # --------------------------------------------------------------------
-cached_atsha_serial() {
-    local output
-    if output=$(cache_get_string "$CRYPTO_KEY_SERIAL"); then
-        debug "key '$CRYPTO_KEY_SERIAL' found in cache"
-    else
-        debug "key '$CRYPTO_KEY_SERIAL' was not found in cache, run atsha204cmd"
-        output=$(atsha204cmd serial-number)
+# Run command with output saved to cache. If some value is found in the cache,
+# output is get directly from cache without actually running the command.
+#
+# First argument is the key to the cache and the rest is command to run
+cached_command() {
+    local key="$1"
+    local cmd="$2"
+    # the rest is arguments
+    shift
+    shift
 
-        debug 'store output of atsha204cmd to cache'
-        cache_set_string "$CRYPTO_KEY_SERIAL" "$output"
+    local output
+    if output=$(cache_get_string "$key"); then
+        debug "key '$key' found in cache"
+    else
+        debug "key '$key' was not found in cache, run the command"
+        output=$("$cmd" "$@") || {
+            error "Failed to run command '$cmd $*'"
+            return 5
+        }
+
+        debug 'store output of the command to cache'
+        cache_set_string "$key" "$output"
     fi
 
     echo "$output"
+}
+
+
+cached_atsha_serial() {
+    cached_command 'serial' 'atsha204cmd' 'serial-number'
 }
