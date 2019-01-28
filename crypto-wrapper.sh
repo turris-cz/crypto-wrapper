@@ -12,6 +12,8 @@ HASH_TYPE='sha256'
 
 CRYPTO_WRAPPER_ROOT_PREFIX='/tmp/crypto_wrapper'
 
+CRYPTO_KEY_SERIAL='serial'
+
 
 # --------------------------------------------------------------------
 stderr_mesage() {
@@ -149,4 +151,21 @@ cache_get_string() {
         return 1
     }
     echo "$value"
+}
+
+
+# --------------------------------------------------------------------
+cached_atsha_serial() {
+    local output
+    if output=$(cache_get_string "$CRYPTO_KEY_SERIAL"); then
+        debug "key '$CRYPTO_KEY_SERIAL' found in cache"
+    else
+        debug "key '$CRYPTO_KEY_SERIAL' was not found in cache, run atsha204cmd"
+        output=$(atsha204cmd serial-number)
+
+        debug 'store output of atsha204cmd to cache'
+        cache_set_string "$CRYPTO_KEY_SERIAL" "$output"
+    fi
+
+    echo "$output"
 }
