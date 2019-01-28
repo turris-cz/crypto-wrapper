@@ -51,6 +51,14 @@ cache_init() {
 }
 
 
+cache_destroy() {
+    rm -f "$CRYPTO_WRAPPER_ROOT"/key_*
+    rm -f "$CRYPTO_WRAPPER_ROOT"/hash_*
+    [ -d "$CRYPTO_WRAPPER_ROOT" ] && rmdir "$CRYPTO_WRAPPER_ROOT"
+    return 0
+}
+
+
 # key should be sha256 hash (HASH_TYPE)
 cache_set() {
     local key="$1"
