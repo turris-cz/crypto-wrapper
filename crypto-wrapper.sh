@@ -28,6 +28,11 @@ warning() {
     stderr_mesage 'warning' "$*"
 }
 
+debug() {
+    # double negative due to `set -o errexit`
+    [ "${DEBUG:-false}" != true ] || stderr_mesage 'debug' "$*"
+}
+
 
 # --------------------------------------------------------------------
 hash_file() {
@@ -83,7 +88,7 @@ cache_get() {
 
     local key_file="$CRYPTO_WRAPPER_ROOT/key_$key"
     [ -f "$key_file" ] || {
-        warning "Key was not found in cache"
+        debug "Key was not found in cache"
         return 1
     }
     value=$(cat "$key_file")
@@ -91,12 +96,12 @@ cache_get() {
     hash=$(hash_string "$value")
     hash_file="$CRYPTO_WRAPPER_ROOT/hash_$hash"
     [ -f "$hash_file" ] || {
-        error "Control file was not found"
+        debug "Control file was not found"
         return 2
     }
 
     [ "$value" = "$(cat "$hash_file")" ] || {
-        error "Control hash does not match the value"
+        debug "Control hash does not match the value"
         return 3
     }
 
@@ -111,7 +116,7 @@ cache_get_file() {
     local value
 
     value=$(cache_get "$key") || {
-        warning "Value for file '$file' was not found in cache"
+        debug "Value for file '$file' was not found in cache"
         return 1
     }
     echo "$value"
@@ -125,7 +130,7 @@ cache_get_string() {
     local value
 
     value=$(cache_get "$key") || {
-        warning "Value for string '$string' was not found in cache"
+        debug "Value for string '$string' was not found in cache"
         return 1
     }
     echo "$value"
