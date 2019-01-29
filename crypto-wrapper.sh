@@ -156,16 +156,28 @@ cache_get_string() {
 # Run command with output saved to cache. If some value is found in the cache,
 # output is get directly from cache without actually running the command.
 #
-# First argument is the key to the cache and the rest is command to run
+# First argument is the key type ('string' or 'file') second is the key to the
+# cache and the rest is command to run
 cached_command() {
-    local key="$1"
-    local cmd="$2"
+    local key_type="$1"
+    local key="$2"
+    local cmd="$3"
+    local output cache_get_funtion cache_set_funtion
     # the rest is arguments
-    shift
-    shift
+    shift 3
 
-    local output
-    if output=$(cache_get_string "$key"); then
+    if   [ "$key_type" = 'string' ]; then
+        cache_get_funtion=cache_get_string
+        cache_set_funtion=cache_set_string
+    elif [ "$key_type" = 'file' ]; then
+        cache_get_funtion=cache_get_file
+        cache_set_funtion=cache_set_file
+    else
+        error "'cached_command: Undefined cache key type '$key_type'"
+        return 4
+    fi
+
+    if output=$("$cache_get_funtion" "$key"); then
         debug "key '$key' found in cache"
     else
         debug "key '$key' was not found in cache, run the command"
@@ -175,7 +187,7 @@ cached_command() {
         }
 
         debug 'store output of the command to cache'
-        cache_set_string "$key" "$output"
+        "$cache_set_funtion" "$key" "$output"
     fi
 
     echo "$output"
@@ -183,5 +195,5 @@ cached_command() {
 
 
 cached_atsha_serial() {
-    cached_command 'serial' 'atsha204cmd' 'serial-number'
+    cached_command string 'serial' 'atsha204cmd' 'serial-number'
 }
