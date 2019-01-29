@@ -10,7 +10,7 @@ SCRIPTNAME=${0##*/}
 # hash used for cache indexing and integrity checks
 HASH_TYPE='sha256'
 
-CRYPTO_WRAPPER_ROOT='/tmp/crypto_wrapper'
+CRYPTO_WRAPPER_ROOT_PREFIX='/tmp/crypto_wrapper'
 
 
 # --------------------------------------------------------------------
@@ -47,6 +47,12 @@ hash_string() {
 
 # this function must be called before running any other cache related function
 cache_init() {
+    local user
+    user=$(id -nu)
+
+    # global variable
+    CRYPTO_WRAPPER_ROOT="${CRYPTO_WRAPPER_ROOT_PREFIX}_${user}"
+
     mkdir -p "$CRYPTO_WRAPPER_ROOT"
 }
 
