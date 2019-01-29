@@ -197,3 +197,10 @@ cached_command() {
 cached_atsha_serial() {
     cached_command string 'serial' 'atsha204cmd' 'serial-number'
 }
+
+
+cached_atsha_challenge_response_file() {
+    local file="$1"
+    # this is wierd atsha204cmd interface...
+    echo "$file" | cached_command file "$file" 'atsha204cmd' 'file-challenge-response'
+}
