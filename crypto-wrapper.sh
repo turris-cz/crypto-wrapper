@@ -208,6 +208,13 @@ cached_atsha_serial() {
 
 cached_atsha_challenge_response_file() {
     local file="$1"
-    # this is wierd atsha204cmd interface...
-    echo "$file" | cached_command file "$file" 'atsha204cmd' 'file-challenge-response'
+
+    # this is wierd atsha204cmd interface and I need to avoid unsafe pipe in
+    # busybox shell
+    local filename=$(cache_mktemp)
+    echo "$file" > "$filename"
+
+    cached_command file "$file" 'atsha204cmd' 'file-challenge-response' < "$filename"
+
+    rm "$filename"
 }
