@@ -206,6 +206,20 @@ cached_atsha_serial() {
 }
 
 
+# 64-bytes hex string from stdin
+cached_atsha_challenge_response() {
+    local hash="$1"
+
+    # read hash from file to avaid unsafe pipe
+    local temp=$(cache_mktemp)
+    echo "$hash" > "$temp"
+
+    cached_command string "$hash" 'atsha204cmd' 'challenge-response' < "$temp"
+
+    rm "$temp"
+}
+
+
 cached_atsha_challenge_response_file() {
     local file="$1"
 
