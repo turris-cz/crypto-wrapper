@@ -60,8 +60,15 @@ cache_init() {
 cache_destroy() {
     rm -f "$CRYPTO_WRAPPER_ROOT"/key_*
     rm -f "$CRYPTO_WRAPPER_ROOT"/hash_*
+    rm -f "$CRYPTO_WRAPPER_ROOT"/temp_*
     [ -d "$CRYPTO_WRAPPER_ROOT" ] && rmdir "$CRYPTO_WRAPPER_ROOT"
     return 0
+}
+
+
+# create empty temporary file in cache root
+cache_mktemp() {
+    mktemp "$CRYPTO_WRAPPER_ROOT/temp_XXXXXX"
 }
 
 
