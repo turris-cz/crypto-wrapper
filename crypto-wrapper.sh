@@ -232,3 +232,21 @@ cached_atsha_challenge_response_file() {
 
     rm "$filename"
 }
+
+
+cached_otp_serial() {
+    cached_command string 'serial' 'mox-otp' 'serial-number'
+}
+
+
+# 128-bytes hex string from stdin
+cached_otp_sign_hash() {
+    local hash="$1"
+    cached_command string "$hash" 'mox-otp' 'sign-hash' "$hash"
+}
+
+
+cached_otp_sign() {
+    local file="$1"
+    cached_command file "$file" 'mox-otp' 'sign' "$file"
+}
