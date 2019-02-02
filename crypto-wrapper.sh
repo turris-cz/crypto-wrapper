@@ -6,6 +6,40 @@ set -eu
 umask 0077
 
 SCRIPTNAME=${0##*/}
+USAGE="USAGE
+    General syntax:
+        $SCRIPTNAME command [args..]
+
+        High-level command for Turris devices to query cryptographic functions
+        and device info stored during production. This command unifies
+        hardware-specific commands such as \`atsha204cmd\` for Turris 1.x and
+        Omnia and \`mox-otp\` for MOX.
+
+        All query commands are cached on the filesystem so querying same
+        commands will not wear-out cryptographic device.
+
+    Available commands:
+        $SCRIPTNAME help
+                    Print this message end exits
+
+        $SCRIPTNAME serial-number
+                    Print serial number of the device
+
+        $SCRIPTNAME sign [file]
+                    \"Sign\" given file or standard input if no file is given.
+                    Signing on atsha-equipped device is realized via HMAC
+                    function with shared secret.
+
+        $SCRIPTNAME sign-hash hash
+                    Sign given hash; it must include only hexadecimal characters
+
+                    WARNING:    low-level command; hash must be exactly the one
+                                underlying command expects (sha512 on MOX and
+                                sha256 on atsha-equipped device)
+
+        $SCRIPTNAME clear-cache
+                    Remove all command cache
+"
 
 # hash used for cache indexing and integrity checks
 HASH_TYPE='sha256'
@@ -398,3 +432,74 @@ do_sign_hash() {
         return 2
     fi
 }
+
+
+# --------------------------------------------------------------------
+main() {
+    # USAGE
+    [ "$#" -lt 1 ] && {
+        error "No command was given"
+        echo "$USAGE" >&2
+        exit 1
+    }
+
+    command="$1"
+    case "$command" in
+        # hardware-independent commands -----
+        'help')
+            echo "$USAGE"
+            ;;
+
+        'clear'|'clear-cache'|'cache-clear')
+            # cache init set CRYPTO_WRAPPER_ROOT variable
+            cache_init
+            cache_destroy
+            ;;
+
+        # hardware-specific commands --------
+        'serial'|'serial-number')
+            if [ $# -eq 1 ]; then
+                do_serial
+            else
+                error 'Too many arguments for `serial-number` command'
+                return 1
+            fi
+            ;;
+
+        'sign'|'file-challenge-response')
+            if   [ $# -eq 1 ]; then
+                # sign the stdin
+                do_sign ""
+            elif [ $# -eq 2 ]; then
+                # sign the given file
+                do_sign "$2"
+            else
+                error 'Too many arguments for `sign` command'
+                return 1
+            fi
+            ;;
+
+        'sign-hash'|'challenge-response')
+            if   [ $# -eq 1 ]; then
+                error 'Hash is missing for `sign-hash` command'
+                return 1
+            elif [ $# -eq 2 ]; then
+                do_sign_hash "$2"
+            else
+                error 'Too many arguments for `sign-hash` command'
+                return 1
+            fi
+            ;;
+
+        # -----------------------------------
+        *)
+            error "Unknown command '$command'"
+            exit 1
+            ;;
+
+    esac
+}
+
+
+# --------------------------------------------------------------------
+main "$@"
