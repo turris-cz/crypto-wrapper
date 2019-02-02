@@ -16,6 +16,10 @@ SYSINFO_MODEL_FILE='/tmp/sysinfo/model'
 TYPE_ATSHA='atsha'
 TYPE_OTP='otp'
 
+# length of a hash for given type (number of hexadecimal characters)
+HASH_LENGTH_ATSHA='64'
+HASH_LENGTH_OTP='128'
+
 
 # --------------------------------------------------------------------
 stderr_mesage() {
@@ -355,4 +359,42 @@ do_sign() {
 
     # remove temp file if it was used
     [ -z "$tmp" ] || rm -f "$tmp"
+}
+
+
+do_sign_hash() {
+    # avoid multiline variable and capital letters
+    # busybox does not support neither ${var,,} nor tr [:upper:] [:lower:]
+    local hash=$(echo "${1}" | head -n 1 | tr 'A-Z' 'a-z')
+    local device_type
+    cache_init
+
+    [ -z "$(echo "$hash" | tr -d '0-9a-f')" ] || {
+        error 'Given hash is not hexadecimal string'
+        return 1
+    }
+
+    device_type=$(get_device_type)
+    if   [ "$device_type" = "$TYPE_ATSHA" ]; then
+        [ "${#hash}" -eq "$HASH_LENGTH_ATSHA" ] || {
+            error "Hash for atsha must have $HASH_LENGTH_ATSHA hexadecimal characters"
+            return 1
+        }
+
+        debug "Call atsha challenge-response with '$hash'"
+        cached_atsha_challenge_response "$hash"
+
+    elif [ "$device_type" = "$TYPE_OTP" ]; then
+        [ "${#hash}" -eq "$HASH_LENGTH_OTP" ] || {
+            error "Hash for atsha must have $HASH_LENGTH_OTP hexadecimal characters"
+            return 1
+        }
+
+        debug "Call otp sign-hash with '$hash'"
+        cached_otp_sign_hash "$hash"
+
+    else
+        error "Unsupported device_type '$device_type'"
+        return 2
+    fi
 }
