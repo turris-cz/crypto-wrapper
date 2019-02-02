@@ -12,6 +12,10 @@ HASH_TYPE='sha256'
 
 CRYPTO_WRAPPER_ROOT_PREFIX='/tmp/crypto_wrapper'
 
+SYSINFO_MODEL_FILE='/tmp/sysinfo/model'
+TYPE_ATSHA='atsha'
+TYPE_OTP='otp'
+
 
 # --------------------------------------------------------------------
 stderr_mesage() {
@@ -249,4 +253,42 @@ cached_otp_sign_hash() {
 cached_otp_sign() {
     local file="$1"
     cached_command file "$file" 'mox-otp' 'sign' "$file"
+}
+
+
+# --------------------------------------------------------------------
+get_device_type(){
+    local model
+
+    [ -f "$SYSINFO_MODEL_FILE" ] || {
+        error "Unknown device model; sysinfo file is missing '$SYSINFO_MODEL_FILE'"
+        return 2
+    }
+
+    model=$(cat "$SYSINFO_MODEL_FILE")
+    case "$model" in
+        # WARNING:
+        #   Turris string is also included in other models
+        #   This case must not include wildcards
+        Turris)
+            debug "Device recognized as Turris 1.x"
+            echo "$TYPE_ATSHA"
+            ;;
+
+        *Omnia*)
+            debug "Device recognized as Omnia"
+            echo "$TYPE_ATSHA"
+            ;;
+
+        *Mox*)
+            debug "Device recognized as MOX"
+            echo "$TYPE_OTP"
+            ;;
+
+        *)
+            error "Unknown device model: '$model'"
+            return 2
+            ;;
+
+    esac
 }
