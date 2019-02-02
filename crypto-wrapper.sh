@@ -5,6 +5,7 @@ set -eu
 # protect cache files from other users
 umask 0077
 
+VERSION='0.1-alpha'
 SCRIPTNAME=${0##*/}
 USAGE="USAGE
     General syntax:
@@ -21,6 +22,9 @@ USAGE="USAGE
     Available commands:
         $SCRIPTNAME help
                     Print this message end exits
+
+        $SCRIPTNAME version
+                    Print script version and exits
 
         $SCRIPTNAME serial-number
                     Print serial number of the device
@@ -448,6 +452,10 @@ main() {
         # hardware-independent commands -----
         'help')
             echo "$USAGE"
+            ;;
+
+        'version')
+            echo "$VERSION"
             ;;
 
         'clear'|'clear-cache'|'cache-clear')
