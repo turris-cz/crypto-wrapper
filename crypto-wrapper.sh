@@ -313,3 +313,46 @@ do_serial() {
         return 2
     fi
 }
+
+
+do_sign() {
+    local file="$1"
+    local tmp=''
+    local device_type
+    cache_init
+
+    # use stdin if no file is given – store it to temp file
+    [ -z "$file" ] && {
+        tmp=$(cache_mktemp)
+        debug "Store stdin to '$tmp'"
+        cat > "$tmp"
+        file="$tmp"
+    }
+
+    [ -f "$file" -a -r "$file" ] || {
+        error "'$file' is not a readable file"
+        return 1
+    }
+
+    device_type=$(get_device_type)
+    case "$device_type" in
+        "$TYPE_ATSHA")
+            debug "Call atsha file-challenge-response with '$file'"
+            cached_atsha_challenge_response_file "$file"
+            ;;
+
+        "$TYPE_OTP")
+            debug "Call otp sign with '$file'"
+            cached_otp_sign "$file"
+            ;;
+
+        *)
+            error "Unsupported device_type '$device_type'"
+            return 2
+            ;;
+
+    esac
+
+    # remove temp file if it was used
+    [ -z "$tmp" ] || rm -f "$tmp"
+}
