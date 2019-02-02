@@ -292,3 +292,24 @@ get_device_type(){
 
     esac
 }
+
+
+# --------------------------------------------------------------------
+do_serial() {
+    local device_type
+    cache_init
+
+    device_type=$(get_device_type)
+    if   [ "$device_type" = "$TYPE_ATSHA" ]; then
+        debug "Call atsha serial-number"
+        cached_atsha_serial
+
+    elif [ "$device_type" = "$TYPE_OTP" ]; then
+        debug "Call otp serial-number"
+        cached_otp_serial
+
+    else
+        error "Unsupported device_type '$device_type'"
+        return 2
+    fi
+}
