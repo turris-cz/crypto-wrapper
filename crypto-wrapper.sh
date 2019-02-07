@@ -81,6 +81,34 @@ debug() {
 
 
 # --------------------------------------------------------------------
+# checks existence and readability of file $1
+check_file() {
+    local file=$1
+
+    [ -f "$file" -a -r "$file" ] || {
+        error "'$file' is not a readable file"
+        return 1
+    }
+}
+
+# check hexstring $1 of given length $2
+check_hexstring() {
+    local hash=$1
+    local length=$2
+
+    [ -z "$(echo "$hash" | tr -d '0-9a-f')" ] || {
+        error 'Given hash is not hexadecimal string'
+        return 1
+    }
+
+    [ "${#hash}" -eq "$length" ] || {
+        error "Given hash must have $length hexadecimal characters"
+        return 1
+    }
+}
+
+
+# --------------------------------------------------------------------
 hash_file() {
     openssl "$HASH_TYPE" "$file" | awk '{print $2}'
 }
@@ -255,6 +283,7 @@ cached_atsha_serial() {
 # 64-bytes hex string from stdin
 cached_atsha_challenge_response() {
     local hash="$1"
+    check_hexstring "$hash" "$HASH_LENGTH_ATSHA"
 
     echo "$hash" \
             | cached_command string "$hash" 'atsha204cmd' 'challenge-response'
@@ -263,6 +292,7 @@ cached_atsha_challenge_response() {
 
 cached_atsha_challenge_response_file() {
     local file="$1"
+    check_file "$file"
 
     # this is wierd atsha204cmd interface
     echo "$file" \
@@ -278,12 +308,16 @@ cached_otp_serial() {
 # 128-bytes hex string from stdin
 cached_otp_sign_hash() {
     local hash="$1"
+    check_hexstring "$hash" "$HASH_LENGTH_OTP"
+
     cached_command string "$hash" 'mox-otp' 'sign-hash' "$hash"
 }
 
 
 cached_otp_sign() {
     local file="$1"
+    check_file "$file"
+
     cached_command file "$file" 'mox-otp' 'sign' "$file"
 }
 
@@ -361,11 +395,6 @@ do_sign() {
         file="$tmp"
     }
 
-    [ -f "$file" -a -r "$file" ] || {
-        error "'$file' is not a readable file"
-        return 1
-    }
-
     device_type=$(get_device_type)
     case "$device_type" in
         "$TYPE_ATSHA")
@@ -394,30 +423,15 @@ do_sign_hash() {
     # avoid multiline variable and capital letters
     # busybox does not support neither ${var,,} nor tr [:upper:] [:lower:]
     local hash device_type
-    cache_init
-
     hash=$(echo "${1}" | head -n 1 | tr 'A-Z' 'a-z')
-    [ -z "$(echo "$hash" | tr -d '0-9a-f')" ] || {
-        error 'Given hash is not hexadecimal string'
-        return 1
-    }
+    cache_init
 
     device_type=$(get_device_type)
     if   [ "$device_type" = "$TYPE_ATSHA" ]; then
-        [ "${#hash}" -eq "$HASH_LENGTH_ATSHA" ] || {
-            error "Hash for atsha must have $HASH_LENGTH_ATSHA hexadecimal characters"
-            return 1
-        }
-
         debug "Call atsha challenge-response with '$hash'"
         cached_atsha_challenge_response "$hash"
 
     elif [ "$device_type" = "$TYPE_OTP" ]; then
-        [ "${#hash}" -eq "$HASH_LENGTH_OTP" ] || {
-            error "Hash for atsha must have $HASH_LENGTH_OTP hexadecimal characters"
-            return 1
-        }
-
         debug "Call otp sign-hash with '$hash'"
         cached_otp_sign_hash "$hash"
 
