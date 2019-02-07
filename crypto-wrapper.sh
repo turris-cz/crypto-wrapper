@@ -122,7 +122,8 @@ cache_mktemp() {
 cache_set() {
     local key="$1"
     local value="$2"
-    local hash=$(hash_string "$value")
+    local hash
+    hash=$(hash_string "$value")
 
     # key is read first so hash must be written before the key
     echo "$value" > "$CRYPTO_WRAPPER_ROOT/hash_$hash"
@@ -149,12 +150,9 @@ cache_set_string() {
 # key should be sha256 hash (HASH_TYPE)
 cache_get() {
     local key="$1"
-    local key_file
-    local hash
-    local hash_file
-    local value
-
     local key_file="$CRYPTO_WRAPPER_ROOT/key_$key"
+    local hash hash_file value
+
     [ -f "$key_file" ] || {
         debug "Key was not found in cache"
         return 1
@@ -180,13 +178,14 @@ cache_get() {
 # get value from cache for the key reffered in file $1
 cache_get_file() {
     local file="$1"
-    local key=$(hash_file "$file")
-    local value
+    local key value
 
+    key=$(hash_file "$file")
     value=$(cache_get "$key") || {
         debug "Value for file '$file' was not found in cache"
         return 1
     }
+
     echo "$value"
 }
 
@@ -194,13 +193,14 @@ cache_get_file() {
 # get value from cache for the key reffered in $1 string
 cache_get_string() {
     local string="$1"
-    local key=$(hash_string "$string")
-    local value
+    local key value
 
+    key=$(hash_string "$string")
     value=$(cache_get "$key") || {
         debug "Value for string '$string' was not found in cache"
         return 1
     }
+
     echo "$value"
 }
 
@@ -403,10 +403,10 @@ do_sign() {
 do_sign_hash() {
     # avoid multiline variable and capital letters
     # busybox does not support neither ${var,,} nor tr [:upper:] [:lower:]
-    local hash=$(echo "${1}" | head -n 1 | tr 'A-Z' 'a-z')
-    local device_type
+    local hash device_type
     cache_init
 
+    hash=$(echo "${1}" | head -n 1 | tr 'A-Z' 'a-z')
     [ -z "$(echo "$hash" | tr -d '0-9a-f')" ] || {
         error 'Given hash is not hexadecimal string'
         return 1
