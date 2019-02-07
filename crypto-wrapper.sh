@@ -256,27 +256,17 @@ cached_atsha_serial() {
 cached_atsha_challenge_response() {
     local hash="$1"
 
-    # read hash from file to avaid unsafe pipe
-    local temp=$(cache_mktemp)
-    echo "$hash" > "$temp"
-
-    cached_command string "$hash" 'atsha204cmd' 'challenge-response' < "$temp"
-
-    rm "$temp"
+    echo "$hash" \
+            | cached_command string "$hash" 'atsha204cmd' 'challenge-response'
 }
 
 
 cached_atsha_challenge_response_file() {
     local file="$1"
 
-    # this is wierd atsha204cmd interface and I need to avoid unsafe pipe in
-    # busybox shell
-    local filename=$(cache_mktemp)
-    echo "$file" > "$filename"
-
-    cached_command file "$file" 'atsha204cmd' 'file-challenge-response' < "$filename"
-
-    rm "$filename"
+    # this is wierd atsha204cmd interface
+    echo "$file" \
+            | cached_command file "$file" 'atsha204cmd' 'file-challenge-response'
 }
 
 
