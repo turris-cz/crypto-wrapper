@@ -5,7 +5,7 @@ set -eu
 # protect cache files from other users
 umask 0077
 
-VERSION='0.1-alpha'
+VERSION='0.1'
 SCRIPTNAME=${0##*/}
 USAGE="USAGE
     General syntax:
