@@ -64,7 +64,7 @@ HASH_LENGTH_OTP='128'
 
 # --------------------------------------------------------------------
 stderr_mesage() {
-    echo "$SCRIPTNAME: $1: $2" >&2
+    printf '%s: %s: %s\n' "$SCRIPTNAME" "$1" "$2" >&2
 }
 
 
@@ -99,7 +99,7 @@ check_hexstring() {
     local hash=$1
     local length=$2
 
-    [ -z "$(echo "$hash" | tr -d '0-9a-f')" ] || {
+    [ -z "$(printf '%s\n' "$hash" | tr -d '0-9a-f')" ] || {
         error 'Given hash is not hexadecimal string'
         return 1
     }
@@ -157,8 +157,8 @@ cache_set() {
     hash=$(hash_string "$value")
 
     # key is read first so hash must be written before the key
-    echo "$value" > "$CRYPTO_WRAPPER_ROOT/hash_$hash"
-    echo "$value" > "$CRYPTO_WRAPPER_ROOT/key_$key"
+    printf '%s\n' "$value" > "$CRYPTO_WRAPPER_ROOT/hash_$hash"
+    printf '%s\n' "$value" > "$CRYPTO_WRAPPER_ROOT/key_$key"
 }
 
 
@@ -202,7 +202,7 @@ cache_get() {
         return 3
     }
 
-    echo "$value"
+    printf '%s\n' "$value"
 }
 
 
@@ -217,7 +217,7 @@ cache_get_file() {
         return 1
     }
 
-    echo "$value"
+    printf '%s\n' "$value"
 }
 
 
@@ -232,7 +232,7 @@ cache_get_string() {
         return 1
     }
 
-    echo "$value"
+    printf '%s\n' "$value"
 }
 
 
@@ -274,7 +274,7 @@ cached_command() {
         "$cache_set_funtion" "$key" "$output"
     fi
 
-    echo "$output"
+    printf '%s\n' "$output"
 }
 
 
@@ -293,7 +293,7 @@ cached_atsha_challenge_response() {
     local hash="$1"
     check_hexstring "$hash" "$HASH_LENGTH_ATSHA"
 
-    echo "$hash" \
+    printf '%s\n' "$hash" \
             | cached_command string "$hash" 'atsha204cmd' 'challenge-response'
 }
 
@@ -303,7 +303,7 @@ cached_atsha_challenge_response_file() {
     check_file "$file"
 
     # this is wierd atsha204cmd interface
-    echo "$file" \
+    printf '%s\n' "$file" \
             | cached_command file "$file" 'atsha204cmd' 'file-challenge-response'
 }
 
@@ -460,7 +460,7 @@ do_sign_hash() {
     # avoid multiline variable and capital letters
     # busybox does not support neither ${var,,} nor tr [:upper:] [:lower:]
     local hash device_type
-    hash=$(echo "${1}" | head -n 1 | tr 'A-Z' 'a-z')
+    hash=$(printf '%s\n' "$1" | head -n 1 | tr 'A-Z' 'a-z')
     cache_init
 
     device_type=$(get_device_type)
