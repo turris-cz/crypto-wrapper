@@ -375,42 +375,46 @@ get_device_type(){
 
 # --------------------------------------------------------------------
 do_serial() {
-    local device_type
+    local device_type serial
     cache_init
 
     device_type=$(get_device_type)
     if   [ "$device_type" = "$TYPE_ATSHA" ]; then
         debug "Call atsha serial-number"
-        cached_atsha_serial
+        serial=$(cached_atsha_serial)
 
     elif [ "$device_type" = "$TYPE_OTP" ]; then
         debug "Call otp serial-number"
-        cached_otp_serial
+        serial=$(cached_otp_serial)
 
     else
         error "Unsupported device_type '$device_type'"
         return 2
     fi
+
+    printf '%s\n' "$serial" | tr 'a-z' 'A-Z'
 }
 
 
 do_mac() {
-    local device_type
+    local device_type mac
     cache_init
 
     device_type=$(get_device_type)
     if   [ "$device_type" = "$TYPE_ATSHA" ]; then
         debug "Call atsha mac"
-        cached_atsha_mac
+        mac=$(cached_atsha_mac)
 
     elif [ "$device_type" = "$TYPE_OTP" ]; then
         debug "Call otp mac-address"
-        cached_otp_mac
+        mac=$(cached_otp_mac)
 
     else
         error "Unsupported device_type '$device_type'"
         return 2
     fi
+
+    printf '%s\n' "$mac" | tr 'A-Z' 'a-z'
 }
 
 
