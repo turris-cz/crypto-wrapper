@@ -29,6 +29,9 @@ USAGE="USAGE
         $SCRIPTNAME serial-number
                     Print serial number of the device
 
+        $SCRIPTNAME mac-address
+                    Print MAC address of the device
+
         $SCRIPTNAME sign [file]
                     \"Sign\" given file or standard input if no file is given.
                     Signing on atsha-equipped device is realized via HMAC
@@ -280,6 +283,11 @@ cached_atsha_serial() {
 }
 
 
+cached_atsha_mac() {
+    cached_command string 'mac' 'atsha204cmd' 'mac' '1'
+}
+
+
 # 64-bytes hex string from stdin
 cached_atsha_challenge_response() {
     local hash="$1"
@@ -302,6 +310,11 @@ cached_atsha_challenge_response_file() {
 
 cached_otp_serial() {
     cached_command string 'serial' 'mox-otp' 'serial-number'
+}
+
+
+cached_otp_mac() {
+    cached_command string 'mac' 'mox-otp' 'mac-address'
 }
 
 
@@ -373,6 +386,26 @@ do_serial() {
     elif [ "$device_type" = "$TYPE_OTP" ]; then
         debug "Call otp serial-number"
         cached_otp_serial
+
+    else
+        error "Unsupported device_type '$device_type'"
+        return 2
+    fi
+}
+
+
+do_mac() {
+    local device_type
+    cache_init
+
+    device_type=$(get_device_type)
+    if   [ "$device_type" = "$TYPE_ATSHA" ]; then
+        debug "Call atsha mac"
+        cached_atsha_mac
+
+    elif [ "$device_type" = "$TYPE_OTP" ]; then
+        debug "Call otp mac-address"
+        cached_otp_mac
 
     else
         error "Unsupported device_type '$device_type'"
@@ -474,6 +507,15 @@ main() {
                 do_serial
             else
                 error 'Too many arguments for `serial-number` command'
+                return 1
+            fi
+            ;;
+
+        'mac'|'mac-address')
+            if [ $# -eq 1 ]; then
+                do_mac
+            else
+                error 'Too many arguments for `mac-address` command'
                 return 1
             fi
             ;;
