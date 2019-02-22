@@ -7,6 +7,19 @@ umask 0077
 
 VERSION='0.2'
 SCRIPTNAME=${0##*/}
+
+# hash used for cache indexing and integrity checks
+HASH_TYPE='sha256'
+CRYPTO_WRAPPER_ROOT_PREFIX='/tmp/crypto_wrapper'
+
+SYSINFO_MODEL_FILE='/tmp/sysinfo/model'
+TYPE_ATSHA='atsha'
+TYPE_OTP='otp'
+
+# length of a hash for given type (number of hexadecimal characters)
+HASH_LENGTH_ATSHA='64'
+HASH_LENGTH_OTP='128'
+
 USAGE="USAGE
     General syntax:
         $SCRIPTNAME command [args..]
@@ -47,19 +60,6 @@ USAGE="USAGE
         $SCRIPTNAME clear-cache
                     Remove all command cache
 "
-
-# hash used for cache indexing and integrity checks
-HASH_TYPE='sha256'
-
-CRYPTO_WRAPPER_ROOT_PREFIX='/tmp/crypto_wrapper'
-
-SYSINFO_MODEL_FILE='/tmp/sysinfo/model'
-TYPE_ATSHA='atsha'
-TYPE_OTP='otp'
-
-# length of a hash for given type (number of hexadecimal characters)
-HASH_LENGTH_ATSHA='64'
-HASH_LENGTH_OTP='128'
 
 
 # --------------------------------------------------------------------
