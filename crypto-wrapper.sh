@@ -21,10 +21,10 @@ USAGE="USAGE
 
     Available commands:
         $SCRIPTNAME help
-                    Print this message end exits
+                    Print this message end exit
 
         $SCRIPTNAME version
-                    Print script version and exits
+                    Print script version and exit
 
         $SCRIPTNAME serial-number
                     Print serial number of the device
@@ -340,7 +340,7 @@ get_device_type(){
     local model
 
     [ -f "$SYSINFO_MODEL_FILE" ] || {
-        error "Unknown device model; sysinfo file is missing '$SYSINFO_MODEL_FILE'"
+        error "Unknown device model; sysinfo file ($SYSINFO_MODEL_FILE) is missing"
         return 2
     }
 
