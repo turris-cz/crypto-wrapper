@@ -39,6 +39,9 @@ USAGE="USAGE
         $SCRIPTNAME version
                     Print script version and exit
 
+        $SCRIPTNAME hw-type
+                    Print HW type ('$TYPE_ATSHA' or '$TYPE_OTP') and exit
+
         $SCRIPTNAME serial-number
                     Print serial number of the device
 
@@ -506,6 +509,15 @@ main() {
             ;;
 
         # hardware-specific commands --------
+        'hw-type'|'type')
+            if [ $# -eq 1 ]; then
+                get_device_type
+            else
+                error 'Too many arguments for `hw-type` command'
+                return 1
+            fi
+            ;;
+
         'serial'|'serial-number')
             if [ $# -eq 1 ]; then
                 do_serial
