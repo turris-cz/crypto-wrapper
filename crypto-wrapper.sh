@@ -305,9 +305,7 @@ cached_atsha_challenge_response_file() {
     local file="$1"
     check_file "$file"
 
-    # this is wierd atsha204cmd interface
-    printf '%s\n' "$file" \
-            | cached_command file "$file" 'atsha204cmd' 'file-challenge-response'
+    cached_command file "$file" 'atsha204cmd' 'file-challenge-response' < "$file"
 }
 
 
