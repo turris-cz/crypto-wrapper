@@ -350,7 +350,7 @@ get_device_type(){
         # WARNING:
         #   Turris string is also included in other models
         #   This case must not include wildcards
-        Turris)
+        Turris|Turris\ 1.?)
             debug "Device recognized as Turris 1.x"
             echo "$TYPE_ATSHA"
             ;;
