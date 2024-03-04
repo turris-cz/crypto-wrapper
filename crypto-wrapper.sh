@@ -5,7 +5,7 @@ set -eu
 # protect cache files from other users
 umask 0077
 
-VERSION='0.4.1'
+VERSION='0.5'
 SCRIPTNAME=${0##*/}
 
 # hash used for cache indexing and integrity checks
