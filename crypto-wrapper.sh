@@ -14,10 +14,15 @@ CRYPTO_WRAPPER_ROOT_PREFIX='/tmp/crypto_wrapper'
 
 SYSINFO_MODEL_FILE='/tmp/sysinfo/model'
 TYPE_ATSHA='atsha'
+TYPE_MCU='mcu'
 TYPE_OTP='otp'
+
+# this file is present on Omnia if MCU provides atsha functionality
+MCU_OR_ATSHA_FILE='/sys/bus/i2c/devices/1-002a/serial_number'
 
 # length of a hash for given type (number of hexadecimal characters)
 HASH_LENGTH_ATSHA='64'
+HASH_LENGTH_MCU='64'
 HASH_LENGTH_OTP='128'
 
 USAGE="USAGE
@@ -27,7 +32,7 @@ USAGE="USAGE
         High-level command for Turris devices to query cryptographic functions
         and device info stored during production. This command unifies
         hardware-specific commands such as \`atsha204cmd\` for Turris 1.x and
-        Omnia and \`mox-otp\` for MOX.
+        older Omnia, \`omnia-mcutool\` for newer Omnia, and \`mox-otp\` for MOX.
 
         All query commands are cached on the filesystem so querying same
         commands will not wear-out cryptographic device.
@@ -40,7 +45,7 @@ USAGE="USAGE
                     Print script version and exit
 
         $SCRIPTNAME hw-type
-                    Print HW type ('$TYPE_ATSHA' or '$TYPE_OTP') and exit
+                    Print HW type ('$TYPE_ATSHA', '$TYPE_MCU' or '$TYPE_OTP') and exit
 
         $SCRIPTNAME serial-number
                     Print serial number of the device
@@ -58,7 +63,7 @@ USAGE="USAGE
 
                     WARNING:    low-level command; hash must be exactly the one
                                 underlying command expects (sha512 on MOX and
-                                sha256 on atsha-equipped device)
+                                sha256 on atsha/mcu-equipped device)
 
         $SCRIPTNAME clear-cache
                     Remove all command cache
@@ -309,6 +314,33 @@ cached_atsha_challenge_response_file() {
 }
 
 
+cached_mcu_serial() {
+    cached_command string 'serial' 'omnia-mcutool' 'serial-number'
+}
+
+
+cached_mcu_mac() {
+    cached_command string 'mac' 'omnia-mcutool' 'mac-address'
+}
+
+
+# 64-bytes hex string from stdin
+cached_mcu_sign_hash() {
+    local hash="$1"
+    check_hexstring "$hash" "$HASH_LENGTH_MCU"
+
+    cached_command string "$hash" 'omnia-mcutool' 'sign-hash' "$hash"
+}
+
+
+cached_mcu_sign() {
+    local file="$1"
+    check_file "$file"
+
+    cached_command file "$file" 'omnia-mcutool' 'sign' "$file"
+}
+
+
 cached_otp_serial() {
     cached_command string 'serial' 'mox-otp' 'serial-number'
 }
@@ -356,8 +388,13 @@ get_device_type(){
             ;;
 
         *Omnia*)
-            debug "Device recognized as Omnia"
-            echo "$TYPE_ATSHA"
+            if [ -f "$MCU_OR_ATSHA_FILE" ]; then
+                debug "Device recognized as Omnia without Atsha (crypto provided by MCU)"
+                echo "$TYPE_MCU"
+            else
+                debug "Device recognized as Omnia with Atsha"
+                echo "$TYPE_ATSHA"
+            fi
             ;;
 
         *Mox*)
@@ -384,6 +421,10 @@ do_serial() {
         debug "Call atsha serial-number"
         serial=$(cached_atsha_serial)
 
+    elif [ "$device_type" = "$TYPE_MCU" ]; then
+        debug "Call mcu serial-number"
+        serial=$(cached_mcu_serial)
+
     elif [ "$device_type" = "$TYPE_OTP" ]; then
         debug "Call otp serial-number"
         serial=$(cached_otp_serial)
@@ -405,6 +446,10 @@ do_mac() {
     if   [ "$device_type" = "$TYPE_ATSHA" ]; then
         debug "Call atsha mac"
         mac=$(cached_atsha_mac)
+
+    elif [ "$device_type" = "$TYPE_MCU" ]; then
+        debug "Call mcu mac-address"
+        mac=$(cached_mcu_mac)
 
     elif [ "$device_type" = "$TYPE_OTP" ]; then
         debug "Call otp mac-address"
@@ -440,6 +485,11 @@ do_sign() {
             cached_atsha_challenge_response_file "$file"
             ;;
 
+        "$TYPE_MCU")
+            debug "Call mcu sign with '$file'"
+            cached_mcu_sign "$file"
+            ;;
+
         "$TYPE_OTP")
             debug "Call otp sign with '$file'"
             cached_otp_sign "$file"
@@ -468,6 +518,10 @@ do_sign_hash() {
     if   [ "$device_type" = "$TYPE_ATSHA" ]; then
         debug "Call atsha challenge-response with '$hash'"
         cached_atsha_challenge_response "$hash"
+
+    elif [ "$device_type" = "$TYPE_MCU" ]; then
+        debug "Call mcu sign-hash with '$hash'"
+        cached_mcu_sign_hash "$hash"
 
     elif [ "$device_type" = "$TYPE_OTP" ]; then
         debug "Call otp sign-hash with '$hash'"
